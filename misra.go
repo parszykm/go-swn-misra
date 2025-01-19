@@ -42,7 +42,7 @@ func (misra *Misra) sendToken(token *Token, conn net.Conn) error {
 
 func (misra *Misra) ManageRecvToken(recvValue int64, nextNodeConn net.Conn) error {
 	if recvValue > 0 { // misra.ping received
-		fmt.Println("Received misra.ping: ", recvValue)
+		fmt.Println("Received PING: ", recvValue)
 		misra.ping.SetValue(recvValue)
 		if misra.m == recvValue {
 			misra.regenerate(misra.ping.GetValue())
