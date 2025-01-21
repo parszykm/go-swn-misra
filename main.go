@@ -7,6 +7,7 @@ import (
 	"net"
 	"os"
 	"sync"
+	"time"
 )
 
 var (
@@ -58,10 +59,11 @@ func handleConn(conn net.Conn, wg *sync.WaitGroup, nextNodeAddr *string, nextNod
 		if !nextNodeInitialized {
 			fmt.Println("Initializing connection with a next node...")
 			nextNodeAddrWithPort := fmt.Sprintf("%s:%s", *nextNodeAddr, *nextNodePort)
-			nextNodeConn, err = net.Dial("tcp", nextNodeAddrWithPort)
-			if err != nil {
-				return fmt.Errorf("Error connecting to next node: %v\n", err)
+			nextNodeConn = retryConnection(nextNodeAddrWithPort)
+			if nextNodeConn == nil {
+				return fmt.Errorf("Failed to connect to next node")
 			}
+
 			nextNodeInitialized = true
 		}
 
@@ -74,6 +76,30 @@ func handleConn(conn net.Conn, wg *sync.WaitGroup, nextNodeAddr *string, nextNod
 		}()
 
 	}
+}
+
+func retryConnection(nextNodeAddrWithPort string) net.Conn {
+	const maxRetries = 5
+	const retryDelay = time.Second * 2 // 2-second delay between retries
+
+	var nextNodeConn net.Conn
+	var err error
+
+	for attempt := 1; attempt <= maxRetries; attempt++ {
+		nextNodeConn, err = net.Dial("tcp", nextNodeAddrWithPort)
+		if err == nil {
+			break
+		}
+
+		fmt.Printf("Attempt %d: Error connecting to next node: %s\n", attempt, err)
+		time.Sleep(retryDelay)
+	}
+
+	if err != nil {
+		fmt.Println("Failed to connect to next node after retries")
+		return nil
+	}
+	return nextNodeConn
 }
 
 func main() {
@@ -113,19 +139,20 @@ func main() {
 		fmt.Println("This is the init node...")
 		fmt.Println("Initializing connection with a next node...")
 		nextNodeAddrWithPort := fmt.Sprintf("%s:%s", *nextNodeAddr, *nextNodePort)
-		nextNodeConn, err = net.Dial("tcp", nextNodeAddrWithPort)
+		nextNodeConn = retryConnection(nextNodeAddrWithPort)
+		if nextNodeConn == nil {
+			fmt.Println("Failed to connect to next node")
+			return
+		}
+
+		fmt.Println("Sending first PING: ", misra.ping.GetValue())
+		err = misra.sendToken(&misra.ping, nextNodeConn)
 		if err != nil {
-			fmt.Printf("Error connecting to next node: %s\n", err)
 			return
 		}
 
 		fmt.Println("Sending first PONG: ", misra.pong.GetValue())
 		err = misra.sendToken(&misra.pong, nextNodeConn)
-		if err != nil {
-			return
-		}
-		fmt.Println("Sending first PING: ", misra.ping.GetValue())
-		err = misra.sendToken(&misra.ping, nextNodeConn)
 		if err != nil {
 			return
 		}
