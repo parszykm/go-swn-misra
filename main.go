@@ -145,13 +145,14 @@ func main() {
 			return
 		}
 
-		fmt.Println("Sending first PONG: ", misra.pong.GetValue())
-		err = misra.sendToken(&misra.pong, nextNodeConn)
+		fmt.Println("Sending first PING: ", misra.ping.GetValue())
+		err = misra.sendToken(&misra.ping, nextNodeConn)
 		if err != nil {
 			return
 		}
-		fmt.Println("Sending first PING: ", misra.ping.GetValue())
-		err = misra.sendToken(&misra.ping, nextNodeConn)
+
+		fmt.Println("Sending first PONG: ", misra.pong.GetValue())
+		err = misra.sendToken(&misra.pong, nextNodeConn)
 		if err != nil {
 			return
 		}

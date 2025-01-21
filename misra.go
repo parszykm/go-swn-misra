@@ -54,11 +54,11 @@ func (misra *Misra) ManageRecvToken(recvValue int64, nextNodeConn net.Conn) erro
 		}
 		go func() {
 			randomSleep := rand.Intn(5) + 1
-			fmt.Printf("Entering critical session for: %d seconds...", randomSleep)
+			fmt.Printf("Entering critical section for: %d seconds...", randomSleep)
 			misra.globalPingState.ManageState(PingLock)
 			time.Sleep(5 * time.Second)
 			misra.globalPingState.ManageState(PingFree)
-			fmt.Println("Leaving critical session...")
+			fmt.Println("Leaving critical section...")
 			err := misra.sendToken(&misra.ping, nextNodeConn)
 			if err != nil {
 				return
