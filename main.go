@@ -51,10 +51,6 @@ func handleConn(conn net.Conn, wg *sync.WaitGroup, nextNodeAddr *string, nextNod
 
 	for {
 		var signedInt int64
-		err := binary.Read(conn, binary.BigEndian, &signedInt)
-		if err != nil {
-			return fmt.Errorf("read error: %v\n", err)
-		}
 
 		if !nextNodeInitialized {
 			fmt.Println("Initializing connection with a next node...")
@@ -67,6 +63,10 @@ func handleConn(conn net.Conn, wg *sync.WaitGroup, nextNodeAddr *string, nextNod
 			nextNodeInitialized = true
 		}
 
+		err := binary.Read(conn, binary.BigEndian, &signedInt)
+		if err != nil {
+			return fmt.Errorf("read error: %v\n", err)
+		}
 		go func() {
 			err := misra.ManageRecvToken(signedInt, nextNodeConn)
 			if err != nil {
